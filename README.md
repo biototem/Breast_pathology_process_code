@@ -1,6 +1,7 @@
 # Breast_pathology_process_code
 
-This repository provides training,predicting and post processing scripts for the article *From Exhaustion to Efficiency: Human-AI Collaboration Enhances Detection of Invasive Carcinoma in Breast Cancer with Extensive Intraductal Component (EIC)*.
+This repository provides training,predicting and post processing scripts for the article 
+*From Exhaustion to Efficiency: Human-AI Collaboration Enhances Detection of Invasive Carcinoma in Breast Cancer with Extensive Intraductal Component (EIC)*.
 (currently under review).
 
 ## System requirements
@@ -24,7 +25,7 @@ other library requirements, see  **./requirements.txt**
 ### in_put
 Supported whole slide image formats：svs,ndpi,tif/tiff and other formats that can be read by openslide-python/tiffslide.
 
-You can modify `file_suffix_list` at **./config.py** line 14:
+You can modify `file_suffix_list` to support in prediction and procession at **./config.py** line 14:
 ```python
 file_suffix_list = ['svs','ndpi','tif']
 ```
@@ -44,6 +45,7 @@ Or you can overlay the tif as visualization of segmentation result when you use 
 #### original 10X&20X Segmentation model output path
 
 ./predict_result_out_root_dir/seg_10x
+
 ./predict_result_out_root_dir/seg_20x
 
 #### corrected Segmentation model output path
@@ -52,8 +54,9 @@ Or you can overlay the tif as visualization of segmentation result when you use 
 **./predict_result_out_root_dir/result_merge/10_20x_convert_final**
 (result saved as generic multi-resolution tiled tif format with size of mpp=0.5)
 
-## Model weights
-Model weights can be downloaded at this  [URL](https://drive.google.com/drive/folders/167IorZBsDn5Lcds_YAZUB9rAtwcGE9Qm?usp=drive_link)
+## Model weights and sample data for testing
+Model weights and sample data for testing are not available to the public yet. 
+Please feel free to contact us should you require any additional information of model weights and sample data.
 
 ## Instructions for use
 1. modify `wsi_dir`,`xml_label_dir`(which is not required. If there is no label file, fill in an empty string or the same path as wsi_dir),
@@ -61,10 +64,16 @@ Model weights can be downloaded at this  [URL](https://drive.google.com/drive/fo
 at **./config.py**
 
 
-2. run scripts for segmentation predicting
+2. run scripts for segmentation 
+There are two model weight for segmentation： 
+*20x.pth(predict with mpp=1.0) and *10x.pth(predict with mpp=0.5)
+modify *20x.pth model weight file to `seg_20X_model_weight_path`,
+*10x.pth model weight file to `seg_10X_model_weight_path` at **./config.py** line 27,29
 ```bash
 python single_predict_compare_jit_10x.py
+# 10x model prediction
 python single_predict_compare_jit_20x.py
+# 20x model prediction
 ```
 
 
@@ -74,6 +83,13 @@ cd post_process
 python 10x_20x_seg_result_correct.py
 python corrected_result_to_20x_tif.py
 ```
+
+## Training scripts
+Segmentation model training method and scripts can see at below repository:
+
+[Segmentation and Detection training code](https://github.com/biototem/TIGER_challenge_2022/tree/master/train_script)
+
+
 
 # LICENSE: CC Attribution-NonCommercial 4.0 International
 Shield: [![CC BY-NC 4.0][cc-by-nc-shield]][cc-by-nc]
