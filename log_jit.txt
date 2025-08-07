@@ -1,0 +1,44 @@
+----------------------------------------------------------------------------------------------------
+# -> jit cost time in all 4m 58s 319ms
+----------------------------------------------------------------------------------------------------
+# -> prepare                  cost time 0s 265ms
+# -> hebingdou_algorithm      cost time 4m 36s 148ms
+# -> algorithm_predict        cost time 4m 15s 472ms
+# -> algorithm_merge          cost time 1s 389ms
+# -> algorithm_post_process   cost time 4s 269ms
+# -> algorithm_write          cost time 3s 538ms
+----------------------------------------------------------------------------------------------------
+# -> 69970_                                                               cost time 4m 55s 865ms
+----------------------------------------------------------------------------------------------------
+# -> jit cost time in all 4m 38s 479ms
+----------------------------------------------------------------------------------------------------
+# -> prepare                  cost time 0s 211ms
+# -> preditct_dict_algorithm  cost time 4m 36s 207ms
+# -> algorithm_predict        cost time 4m 20s 995ms
+# -> algorithm_merge          cost time 1s 155ms
+# -> algorithm_post_process   cost time 3s 666ms
+# -> algorithm_write          cost time 3s 230ms
+----------------------------------------------------------------------------------------------------
+# -> 69970_                                                               cost time 4m 36s 657ms
+----------------------------------------------------------------------------------------------------
+# -> jit cost time in all 17m 23s 146ms
+----------------------------------------------------------------------------------------------------
+# -> prepare                  cost time 0s 416ms
+# -> preditct_dict_algorithm  cost time 17m 20s 101ms
+# -> algorithm_predict        cost time 16m 30s 635ms
+# -> algorithm_merge          cost time 4s 522ms
+# -> algorithm_post_process   cost time 14s 961ms
+# -> algorithm_write          cost time 10s 753ms
+----------------------------------------------------------------------------------------------------
+# -> 69970_                                                               cost time 17m 20s 774ms
+----------------------------------------------------------------------------------------------------
+# -> jit cost time in all 17m 23s 290ms
+----------------------------------------------------------------------------------------------------
+# -> prepare                  cost time 0s 402ms
+# -> preditct_dict_algorithm  cost time 17m 20s 743ms
+# -> algorithm_predict        cost time 16m 32s 916ms
+# -> algorithm_merge          cost time 4s 314ms
+# -> algorithm_post_process   cost time 14s 48ms
+# -> algorithm_write          cost time 10s 625ms
+----------------------------------------------------------------------------------------------------
+# -> 69970_                                                               cost time 17m 21s 393ms
