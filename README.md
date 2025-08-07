@@ -1,7 +1,6 @@
 # Breast_pathology_process_code
 
-This repository provides training,predicting and post processing scripts for the article 
-*From Exhaustion to Efficiency: Human-AI Collaboration Enhances Detection of Invasive Carcinoma in Breast Cancer with Extensive Intraductal Component (EIC)*.
+This repository provides inference and postprocessing scripts for the article *From Exhaustion to Efficiency: Human-AI Collaboration Enhances Detection of Invasive Carcinoma in Breast Cancer with Extensive Intraductal Component (EIC)*.
 (currently under review).
 
 ## System requirements
