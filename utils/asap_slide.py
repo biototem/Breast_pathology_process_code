@@ -4,7 +4,11 @@
 
 import os
 import traceback
-
+# import sys
+# ASAP_bin_path = os.path.join(os.getcwd(), '/opt/ASAP/bin/')
+## Here is the ASAP bin path, just modify it to your real path
+# os.environ['PATH'] = ASAP_bin_path + ";" + os.environ['PATH']
+# sys.path.append(ASAP_bin_path)
 import multiresolutionimageinterface as mir
 
 from PIL import Image

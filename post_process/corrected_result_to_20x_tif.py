@@ -99,11 +99,8 @@ if __name__ == '__main__':
         file_name = os.path.basename(file_path).split(".tif")[0]
         path_20x_segtif = file_path
         path_20x_2um_png = os.path.join(dir_ys, file_name + '_20x_ys.png')
-        #str(path_20x_segtif).replace(dir_20xseg_tif,dir_ys).replace('.tif','_20x_ys.png')
         path_seg_2um_correct = os.path.join(dir_final_result, file_name + '.png')
-        #str(path_20x_segtif).replace(dir_20xseg_tif,dir_final_result).replace('.tif','.png')
         out_path = os.path.join(tif_out_dir,file_name + '.tif')
-        #str(path_20x_segtif).replace(dir_20xseg_tif,tif_out_dir).replace('.tif','.tif')
         list_tmp1 = [path_20x_segtif,path_20x_2um_png,path_seg_2um_correct,out_path]
         list_all.append(list_tmp1)
     pool = mul.Pool(3)
