@@ -107,7 +107,7 @@ class AslideReader(Slide):
 
         Returns
         -------
-        最靠近目标分辨率下的层级 
+        closest_level_to_target_resolution
             DESCRIPTION.
 
         """

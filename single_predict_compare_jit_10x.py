@@ -112,8 +112,8 @@ def start(image_path, label_path,mask_path, predict_path, model: torch.nn.Module
         # PPlot().add(thumb, mask).show()
         
         cv2.imwrite(mask_path, mask.astype(np.uint8))
-
-    mask = cv2.imread(mask_path, 0)
+    else:
+        mask = cv2.imread(mask_path, 0)
 
     with T['prepare']:
         # 分辨率大换算 - 整图
@@ -149,7 +149,7 @@ def start(image_path, label_path,mask_path, predict_path, model: torch.nn.Module
 
         # 数据集打包
         dataset = TempDataset(source=source, ksize=kp)
-        dataloader = DataLoader(dataset=dataset, batch_size=16, num_workers=8, shuffle=False, pin_memory=True)
+        dataloader = DataLoader(dataset=dataset, batch_size=config.batch_size, num_workers=config.num_workers, shuffle=False, pin_memory=True)
 
         # 高斯核准备
         kernel = get_kernel(width=512, height=512, steep=4).cuda().unsqueeze(0).unsqueeze(0)
