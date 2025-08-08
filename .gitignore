@@ -7,4 +7,5 @@ sys.ini*
 *.pth
 *.png
 *.log
+config.py
 output/*
