@@ -1,8 +1,10 @@
-import os
-import pickle
-import math
-import shutil
-
+import os,sys
+sys.path.append("../")
+# import pickle
+# import math
+# import shutil
+import config
+os.environ['CUDA_VISIBLE_DEVICES'] = config.GPU_USE
 import imageio.v3
 import numpy as np
 import cv2
@@ -11,8 +13,7 @@ import tiffslide
 from PIL import Image
 from scipy.spatial import distance
 Image.MAX_IMAGE_PIXELS = None
-import  multiprocessing  as mul
-from torchvision.transforms import autoaugment, transforms
+from torchvision.transforms import transforms #autoaugment
 from utils.imagescope_xml_utils import ImageScopeXmlReader,ImageScopeXmlWriter
 
 train_transform1 = transforms.Compose([
@@ -20,33 +21,11 @@ train_transform1 = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
+COLORS = config.label_colors
 
-COLORS = np.asarray([
-    [100, 100, 100],  # 灰色 -> 背景
-    [255, 0, 0],  # 亮红 -> Invasive Tumor -- 浸润性肿瘤
-    [180, 120, 0],  # 橙黄 -> Tumor-associated Stroma -- 肿瘤相关基质
-    [120, 0, 0],  # 暗红 -> In-situ Tumor -- 原位肿瘤
-    [0, 180, 0],  # 绿色 -> Healthy Glands -- 健康腺体（上皮细胞）
-    [0, 0, 0],  # 黑色 -> Necrosis not in-situ -- 非原位坏死
-    [255, 255, 0],  # 亮黄 -> Inflamed Stroma -- 炎症基质
-    [255, 255, 255],  # 白色 -> Rest -- 余项
-], dtype=np.uint8)
-
-
-def get_最靠近指定分辨率下的层级(img_slide, target_mpp):
-    最靠近目标分辨率下的层级 = 0
-    jfjfp_pfpf = 99999
-    min_img_lever = img_slide.level_count
-    for tmp_i in range(min_img_lever):
-        mpp_in_level = img_slide.properties['tiffslide.mpp-x'] * img_slide.level_downsamples[tmp_i]
-        ooooo_tmp = abs(target_mpp - mpp_in_level)
-        if ooooo_tmp < jfjfp_pfpf:
-            jfjfp_pfpf = ooooo_tmp
-            最靠近目标分辨率下的层级 = tmp_i
-    return 最靠近目标分辨率下的层级
 def fun(list111111):
     # try:
-    wsi_path, seg_convert_path,mohu_path, xml_path = list111111
+    wsi_path, seg_convert_path,blur_mask_path, xml_path = list111111
     in_xml = str(xml_path).replace('.xml','_ys.xml')
 
     if os.path.exists(in_xml):
@@ -55,7 +34,7 @@ def fun(list111111):
         boxes, box_colors = reader.get_boxes()
         contours, contour_colors = reader.get_contours()
         ellipses, ellipse_colors = reader.get_ellipses()
-        判定轮廓闭合的距离 = 1000  # 1000个像素点，原因是，已经至少发现相隔500-700像素的闭合轮廓
+        closed_contour_distance = 1000  # 1000个像素点，原因是，已经至少发现相隔500-700像素的闭合轮廓
         error_cnts_dict = {}
         all_cnt = []
 
@@ -67,7 +46,7 @@ def fun(list111111):
             c1 = c1.astype(np.int64)
             d = np.sqrt(np.sum((c0 - c1) ** 2))
 
-            if d > 判定轮廓闭合的距离:
+            if d > closed_contour_distance:
                 error_cnts_dict[idx] = cnt
             else:
                 all_cnt.append(cnt)
@@ -75,11 +54,11 @@ def fun(list111111):
         if len(error_cnts_dict.keys()) > 1:
             while True:
                 tmp_key1111 = sorted(list(error_cnts_dict.keys()))[0]
-                sorted_cnts_最终 = error_cnts_dict[tmp_key1111]
+                sorted_cnts_final = error_cnts_dict[tmp_key1111]
                 error_cnts_dict.pop(tmp_key1111)
                 for gkgk in range(len(error_cnts_dict.keys())):
-                    c00_最终 = sorted_cnts_最终[0, :].astype(np.int64)
-                    c11_最终 = sorted_cnts_最终[-1, :].astype(np.int64)
+                    c00_final = sorted_cnts_final[0, :].astype(np.int64)
+                    c11_final = sorted_cnts_final[-1, :].astype(np.int64)
                     dict1 = {}
                     list_dict_v = []
                     for tmp_key in error_cnts_dict.keys():
@@ -87,16 +66,16 @@ def fun(list111111):
                         c00 = tmp_cnt[0, :].astype(np.int64)
                         c11 = tmp_cnt[-1, :].astype(np.int64)
 
-                        d1 = np.sqrt(np.sum((c00_最终 - c00) ** 2))  ###头头
-                        d2 = np.sqrt(np.sum((c11_最终 - c11) ** 2))  ###尾尾
+                        d1 = np.sqrt(np.sum((c00_final - c00) ** 2))  ###头头
+                        d2 = np.sqrt(np.sum((c11_final - c11) ** 2))  ###尾尾
 
-                        d3 = np.sqrt(np.sum((c11_最终 - c00) ** 2))  ###尾头
-                        d4 = np.sqrt(np.sum((c00_最终 - c11) ** 2))  ###头尾
+                        d3 = np.sqrt(np.sum((c11_final - c00) ** 2))  ###尾头
+                        d4 = np.sqrt(np.sum((c00_final - c11) ** 2))  ###头尾
 
-                        # d1 = math.sqrt((c00_最终[0] - c00[0]) ** 2 + (c00_最终[1] - c00[1]) ** 2)###头头
-                        # d2 = math.sqrt((c11_最终[0] - c11[0]) ** 2 + (c11_最终[1] - c11[1]) ** 2)###尾尾
-                        # d3 = math.sqrt((c11_最终[0] - c00[0]) ** 2 + (c11_最终[1] - c00[1]) ** 2)###尾头
-                        # d4 = math.sqrt((c00_最终[0] - c11[0]) ** 2 + (c00_最终[1] - c11[1]) ** 2)###头尾
+                        # d1 = math.sqrt((c00_final[0] - c00[0]) ** 2 + (c00_final[1] - c00[1]) ** 2)###头头
+                        # d2 = math.sqrt((c11_final[0] - c11[0]) ** 2 + (c11_final[1] - c11[1]) ** 2)###尾尾
+                        # d3 = math.sqrt((c11_final[0] - c00[0]) ** 2 + (c11_final[1] - c00[1]) ** 2)###尾头
+                        # d4 = math.sqrt((c00_final[0] - c11[0]) ** 2 + (c00_final[1] - c11[1]) ** 2)###头尾
 
                         my_list1 = [d1, d2, d3, d4]
                         list_d_type = [1, 2, 3, 4]
@@ -108,19 +87,19 @@ def fun(list111111):
                     tmp_key, min_cls1 = dict1[key_1]
                     tmp_cnt1 = error_cnts_dict.pop(tmp_key)
                     if min_cls1 == 1:
-                        sorted_cnts_最终 = np.concatenate([sorted_cnts_最终[::-1, :], tmp_cnt1], axis=0)
+                        sorted_cnts_final = np.concatenate([sorted_cnts_final[::-1, :], tmp_cnt1], axis=0)
                     elif min_cls1 == 2:
-                        sorted_cnts_最终 = np.concatenate([sorted_cnts_最终, tmp_cnt1[::-1, :]], axis=0)
+                        sorted_cnts_final = np.concatenate([sorted_cnts_final, tmp_cnt1[::-1, :]], axis=0)
                     elif min_cls1 == 3:
-                        sorted_cnts_最终 = np.concatenate([sorted_cnts_最终, tmp_cnt1], axis=0)
+                        sorted_cnts_final = np.concatenate([sorted_cnts_final, tmp_cnt1], axis=0)
                     else:
-                        sorted_cnts_最终 = np.concatenate([sorted_cnts_最终[::-1, :], tmp_cnt1[::-1, :]], axis=0)
-                    c0 = sorted_cnts_最终[0, :].astype(np.int64)
-                    c1 = sorted_cnts_最终[-1, :].astype(np.int64)
+                        sorted_cnts_final = np.concatenate([sorted_cnts_final[::-1, :], tmp_cnt1[::-1, :]], axis=0)
+                    c0 = sorted_cnts_final[0, :].astype(np.int64)
+                    c1 = sorted_cnts_final[-1, :].astype(np.int64)
                     d = np.sqrt(np.sum((c0 - c1) ** 2))
-                    if (d < 判定轮廓闭合的距离) | (len(error_cnts_dict.keys()) == 0):
+                    if (d < closed_contour_distance) | (len(error_cnts_dict.keys()) == 0):
                         break
-                all_cnt.append(sorted_cnts_最终)
+                all_cnt.append(sorted_cnts_final)
                 if (len(error_cnts_dict.keys()) == 0):
                     break
         elif len(error_cnts_dict.keys()) == 1:
@@ -130,19 +109,19 @@ def fun(list111111):
         writer.add_boxes(boxes, box_colors)
         writer.add_contours(all_cnt, [contour_colors[0] for i13 in all_cnt])
         writer.add_ellipses(ellipses, ellipse_colors)
-        计数1 =  len(all_cnt)
+        # 计数1 =  len(all_cnt)
     else:
-        计数1 = 0
+        # 计数1 = 0
         print('请确认执行了一遍复制备份了原始xml文件，命名为_ys.xml')
         writer = ImageScopeXmlWriter()
     try:
         img_slide = tiffslide.TiffSlide(wsi_path)
-        wsi_mpp_um = float(img_slide.properties['tiffslide.mpp-x'])
+        wsi_mpp_um = float(img_slide.properties[tiffslide.PROPERTY_NAME_MPP_X])
     except:
         img_slide = openslide.OpenSlide(wsi_path)
-        wsi_mpp_um = float(img_slide.properties['openslide.mpp-x'])
-    name = os.path.basename(wsi_path)
-    blur_mask = imageio.v3.imread(mohu_path)
+        wsi_mpp_um = float(img_slide.properties[openslide.PROPERTY_NAME_MPP_X])
+    # name = os.path.basename(wsi_path)
+    blur_mask = imageio.v3.imread(blur_mask_path)
 
     ds = 2/wsi_mpp_um
     ds_40x = 0.25/wsi_mpp_um
@@ -252,51 +231,51 @@ def fun(list111111):
         # tumor_bulk_contours, _  = cv2.findContours(np.uint8(tmp_seg_ee_ys==1),mode=3,method=cv2.CHAIN_APPROX_SIMPLE)
         # tumor_bulk_visual = cv2.drawContours(tmp_img_ys,tumor_bulk_contours,-1,(255,0,0),5)
         # tmp_img_ys =cv2.resize(tumor_bulk_visual,(round(tmp_img_ys.shape[1]/2),round(tmp_img_ys.shape[0]/2)), interpolation=cv2.INTER_NEAREST )
-        模糊占比 = np.sum((tmp_seg_ee_ys==1)&(tmp_blur_ys==3))/np.sum(tmp_seg_ee_ys==1)
-        # print(模糊占比)
-        if (模糊占比)<0.2:
-            模糊占比1 = np.sum((tmp_seg_ee_ys == 1) & ((tmp_blur_ys == 3) | (tmp_blur_ys == 2))) / np.sum(tmp_seg_ee_ys == 1)
-            if not ((模糊占比1>0.2)&((w_new_ys*h_new_ys)<(1000*1000))):
+        blur_proportion = np.sum((tmp_seg_ee_ys==1)&(tmp_blur_ys==3))/np.sum(tmp_seg_ee_ys==1)
+        # print(blur_proportion)
+        if (blur_proportion)<0.2:
+            blur_proportion1 = np.sum((tmp_seg_ee_ys == 1) & ((tmp_blur_ys == 3) | (tmp_blur_ys == 2))) / np.sum(tmp_seg_ee_ys == 1)
+            if not ((blur_proportion1>0.2)&((w_new_ys*h_new_ys)<(1000*1000))):
                 box_ys_hw = np.array([[y_new, x_new], [y_new, x_new + w_new_ys], [y_new + h_new_ys, x_new + w_new_ys], [y_new + h_new_ys, x_new]])
                 boxes_new_list.append(box_ys_hw)
                 box_colors_new_list.append((255, 0, 0))
-    计数2 = len(boxes_new_list)
+    # 计数2 = len(boxes_new_list)
 
-    # os.makedirs(os.path.dirname(str(xml_path).replace('/media/USB_DISK/DCIS_batch2/','/media/USB_DISK/DCIS_batch2_pred/20x_jit8_10x_jit28/tmp_pkl/')), exist_ok=True)
-    # file = open(str(xml_path).replace('/media/USB_DISK/DCIS_batch2/','/media/USB_DISK/DCIS_batch2_pred/20x_jit8_10x_jit28/tmp_pkl/').replace('.xml','.pkl'), 'wb')
-    # str(xml_path)
-    # pickle.dump([计数1,计数2], file)
-    # file.close()
     writer.add_boxes(boxes_new_list, box_colors_new_list)
-    # xml_path_name = os.path.basename(xml_path)
-    # xml_path = '/media/USB_DISK/xml_对比/DCIS_batch2/原来的/'+xml_path_name
+
     print(xml_path)
     writer.write(xml_path)
     # except:
     #     print('error',list111111[0])
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-    from pathlib import Path
+    import re
     import multiprocessing as mul
-    def get_npy_file_paths(directory):
-        directory_path = Path(directory)
-        npy_file_paths = sorted([str(file_path) for file_path in directory_path.rglob('*.svs')])
-        return npy_file_paths
-    wsi_dir = '/mnt/totem_data2/totem/吴钰-TNBC+新辅助免疫治疗/sunpeng/微乳头穿刺/'
-    seg_10_20x_convert_dir = '/mnt/totem_data2/totem/hebingdou_method_seg_2408/吴钰-TNBC+新辅助免疫治疗/微乳头穿刺/result_merge/10_20x_convert/'
-    mohumask_dir = '/mnt/totem_data2/totem/hebingdou_method_seg_2408/吴钰-TNBC+新辅助免疫治疗/微乳头穿刺/mohu_mask/'
-    xml_output_dir = '/mnt/totem_data2/totem/hebingdou_method_seg_2408/吴钰-TNBC+新辅助免疫治疗/微乳头穿刺/xml_Invasive/'
+    from predict_method import get_npy_file_paths
+
+    wsi_dir = config.wsi_dir
+    seg_10_20x_convert_dir = os.path.join(config.predict_result_out_root_dir,'result_merge','10_20x_convert')
+    blur_mask_dir = os.path.join(config.blurred_mask_dir, '20x')
+    if not os.path.exists(blur_mask_dir):
+        blur_mask_dir = os.path.join(config.blurred_mask_dir, '10x')
+    xml_output_dir = config.invasive_blur_box_xml_output_dir
     os.makedirs(xml_output_dir,exist_ok=True)
     list_wsi_path = get_npy_file_paths(wsi_dir)  #获取输入的文件名称列表
     list_l111  =  []
     for wsi_path in list_wsi_path:
-        seg_convert_path = str(wsi_path).replace(wsi_dir, seg_10_20x_convert_dir).replace( '.svs', '.png')
+        fname = os.path.basename(wsi_path)
+        # 文件名合规性检查
+        if '.' not in fname: continue
+        name, ext = re.search(r'^(.*)\.([^\.]*)$', fname).groups()
+        seg_convert_path = os.path.join(seg_10_20x_convert_dir,f"{name}.png")
+        # str(wsi_path).replace(wsi_dir, seg_10_20x_convert_dir).replace( '.svs', '.png')
         if not os.path.exists(seg_convert_path):continue
-        xml_path = str(wsi_path).replace(wsi_dir, xml_output_dir).replace('.svs', '.xml')
-        if os.path.exists(xml_path):continue
-        mohu_path = str(wsi_path).replace(wsi_dir, mohumask_dir).replace('.svs', '.png')
-        list_l111.append([wsi_path, seg_convert_path, mohu_path, xml_path])
+        xml_save_path = os.path.join(xml_output_dir,f"{name}.xml")
+        if os.path.exists(xml_save_path):continue
+        blur_mask_path = os.path.join(blur_mask_dir,f"{name}.png")
+        # str(wsi_path).replace(wsi_dir, blur_mask_dir).replace('.svs', '.png')
+        if not os.path.exists(blur_mask_path): continue
+        list_l111.append([wsi_path, seg_convert_path, blur_mask_path, xml_save_path])
 
     pool = mul.Pool(2)
     pool.map(fun, list_l111)
