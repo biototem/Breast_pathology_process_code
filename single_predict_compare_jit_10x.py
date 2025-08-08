@@ -122,7 +122,7 @@ def start(image_path, label_path,mask_path, predict_path, model: torch.nn.Module
         hp = round(h0 * origin_mpp / target_mpp)
         hm, wm = mask.shape
         # 分辨率大换算 - 块图
-        kp = 512
+        kp = config.seg_pred_size
         # k0 = round(kp * target_mpp / origin_mpp)
         km = round(kp * wm / wp)
         kl = round(kp * target_mpp / level_mpp)
@@ -152,7 +152,7 @@ def start(image_path, label_path,mask_path, predict_path, model: torch.nn.Module
         dataloader = DataLoader(dataset=dataset, batch_size=config.batch_size, num_workers=config.num_workers, shuffle=False, pin_memory=True)
 
         # 高斯核准备
-        kernel = get_kernel(width=512, height=512, steep=4).cuda().unsqueeze(0).unsqueeze(0)
+        kernel = get_kernel(width=config.seg_pred_size, height=config.seg_pred_size, steep=4).cuda().unsqueeze(0).unsqueeze(0)
 
     # 进入算法
     with T['preditct_dict_algorithm']:
