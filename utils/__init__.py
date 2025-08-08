@@ -4,7 +4,7 @@ from .tiff_slide import TiffReader
 from .mask import image2mask
 from .show import PPlot
 from .shape import *
-from .aslide_utils import AslideReader
+# from .aslide_utils import AslideReader
 
 __all__ = [
     'gaussian_kernel',
