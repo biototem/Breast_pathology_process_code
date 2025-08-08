@@ -26,6 +26,6 @@ __all__ = [
     'ConvexMultiPolygon',
     'SimpleMultiPolygon',
     'ComplexMultiPolygon',
-    'ShapeSet',
-    'AslideReader'
+    'ShapeSet'
+#    'AslideReader'
 ]
