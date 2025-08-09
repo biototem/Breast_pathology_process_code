@@ -255,9 +255,6 @@ if __name__ == '__main__':
 
     wsi_dir = config.wsi_dir
     seg_10_20x_convert_dir = os.path.join(config.predict_result_out_root_dir,'result_merge','10_20x_convert')
-    blur_mask_dir = os.path.join(config.blurred_mask_dir, '20x')
-    if not os.path.exists(blur_mask_dir):
-        blur_mask_dir = os.path.join(config.blurred_mask_dir, '10x')
     xml_output_dir = config.invasive_blur_box_xml_output_dir
     os.makedirs(xml_output_dir,exist_ok=True)
     list_wsi_path = get_npy_file_paths(wsi_dir)  #获取输入的文件名称列表
@@ -272,7 +269,11 @@ if __name__ == '__main__':
         if not os.path.exists(seg_convert_path):continue
         xml_save_path = os.path.join(xml_output_dir,f"{name}.xml")
         if os.path.exists(xml_save_path):continue
+        blur_mask_dir = os.path.join(config.blurred_mask_dir, '20x')
         blur_mask_path = os.path.join(blur_mask_dir,f"{name}.png")
+        if not os.path.exists(blur_mask_path):
+            blur_mask_dir = os.path.join(config.blurred_mask_dir, '10x')
+            blur_mask_path = os.path.join(blur_mask_dir, f"{name}.png")
         # str(wsi_path).replace(wsi_dir, blur_mask_dir).replace('.svs', '.png')
         if not os.path.exists(blur_mask_path): continue
         list_l111.append([wsi_path, seg_convert_path, blur_mask_path, xml_save_path])

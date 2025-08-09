@@ -45,20 +45,25 @@ def get_pred_label(img_slide, target_mpp):
     return pred_level
 
 class roi_dataset(Dataset):
-    def __init__(self,img_list,img_slide,model_pred_szie):
+    def __init__(self,img_list,wsi_path,model_pred_szie):
         super().__init__()
         self.images_lst = img_list
-        self.img_slide = img_slide
+        self.img_slide = None
         self.model_pred_szie = model_pred_szie
+        self.wsi_path = wsi_path
     def __len__(self):
         return len(self.images_lst)
     def __getitem__(self, idx):
+        if self.img_slide is None:
+            self.img_slide = tiffslide.TiffSlide(self.wsi_path)
         index_n  = self.images_lst[idx]
-        # closest_level_to_target_resolution = index_n[4]
+        level = index_n[4] # closest_level_to_target_resolution
         index_20x_h1,index_20x_w1,_,_,index_20x_size = index_n[0],index_n[1],index_n[2],index_n[3],index_n[5]
         mask_index = torch.as_tensor(index_n[6])
         try:
-            image_20x = np.array(self.img_slide.read_region((index_20x_w1,index_20x_h1), index_n[4], (index_20x_size,index_20x_size)))[:,:,:3]
+            image_20x = np.array(self.img_slide.read_region((index_20x_w1,index_20x_h1),
+                                                            level,
+                                                            (index_20x_size,index_20x_size)))[:,:,:3]
             image_20x  = cv2.resize(image_20x,(self.model_pred_szie,self.model_pred_szie))
         except Exception as e:
             print(f"Found wrong in read tile at {(index_20x_w1,index_20x_h1)}.")
@@ -71,7 +76,7 @@ class roi_dataset(Dataset):
 
 
 if __name__ == '__main__':
-    model_weight_path = config.qc_20x_model_weight_path
+    model_weight_path = config.qc_10x_model_weight_path
 
     model_pred_szie = 256
     model = load_model(model_weight_path)
@@ -84,6 +89,7 @@ if __name__ == '__main__':
         out_blurred_mask_dir = os.path.join(config.blurred_mask_dir, '20x')
     else:
         model_target_mpp = None
+        out_blurred_mask_dir = config.blurred_mask_dir
         print('Please check QC model weight file name !')
 
 
@@ -150,7 +156,7 @@ if __name__ == '__main__':
                                                (mask_h1 , mask_h2, mask_w1, mask_w2)])
             # mask_01_array1 = np.zeros(mask_01_array.shape,dtype=np.uint8)
 
-            dataset1 = roi_dataset(img_list=list_all_index,img_slide=img_slide,model_pred_szie=model_pred_szie)
+            dataset1 = roi_dataset(img_list=list_all_index,wsi_path=wsi_path,model_pred_szie=model_pred_szie)
             database_loader = DataLoader(dataset1, batch_size=config.batch_size, num_workers=config.num_workers, shuffle=False, pin_memory=True)
             with torch.no_grad():
                 for batch_20X,mask_index in tqdm(database_loader):
